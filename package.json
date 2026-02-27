@@ -1,0 +1,14 @@
+{
+  "name": "barun-ats",
+  "version": "1.0.0",
+  "description": "바른컴퍼니 채용관리시스템 (Barun ATS)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}
