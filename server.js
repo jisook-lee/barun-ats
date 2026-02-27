@@ -2,13 +2,28 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
+const multer = require("multer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ─── File Upload Setup ───
+const UPLOAD_DIR = path.join(__dirname, "uploads");
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + "_" + Buffer.from(file.originalname, 'latin1').toString('utf8');
+    cb(null, uniqueName);
+  },
+});
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB limit
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/uploads", express.static(UPLOAD_DIR));
 
 // ─── JSON File DB ───
 const DB_PATH = path.join(__dirname, "data.json");
@@ -261,6 +276,102 @@ app.get("/api/dashboard", (req, res) => {
     recentApplicants: apps.sort((a, b) => b.appliedAt.localeCompare(a.appliedAt)).slice(0, 5)
       .map((a) => isSuperAdmin(req.query) ? a : filterPrivateFields(a)),
   });
+});
+
+// ─── API: 파일 업로드 ───
+app.post("/api/upload", upload.single("file"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "파일이 없습니다." });
+  const fileUrl = `/uploads/${req.file.filename}`;
+  const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+  res.json({ success: true, url: fileUrl, originalName, size: req.file.size });
+});
+
+// ─── API: 엑셀 업로드 (지원자 일괄 등록) ───
+app.post("/api/applicants/bulk", (req, res) => {
+  const rl = req.query.roleLevel;
+  if (rl === "일반사용자") return res.status(403).json({ error: "등록 권한이 없습니다." });
+  const db = loadDB();
+  const { applicants: newApps } = req.body;
+  if (!Array.isArray(newApps) || newApps.length === 0) return res.status(400).json({ error: "등록할 지원자 데이터가 없습니다." });
+
+  let nextId = db.applicants.length > 0 ? Math.max(...db.applicants.map(a => a.id)) + 1 : 1;
+  const added = [];
+  for (const app of newApps) {
+    if (!app.name) continue;
+    const newApp = {
+      id: nextId++, name: app.name, department: app.department || "기타", position: app.position || "",
+      stage: "서류접수", channel: app.channel || "기타", phone: app.phone || "",
+      email: app.email || "", appliedAt: app.appliedAt || new Date().toISOString().split("T")[0],
+      score: null, comment: "", resume: "", files: [],
+    };
+    db.applicants.push(newApp);
+    added.push(newApp);
+  }
+  saveDB(db);
+  res.status(201).json({ success: true, count: added.length, applicants: added });
+});
+
+// ─── API: 지원자 일괄 삭제 ───
+app.post("/api/applicants/bulk-delete", (req, res) => {
+  if (!isSuperAdmin(req.query)) return res.status(403).json({ error: "최고관리자만 삭제 가능합니다." });
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: "삭제할 지원자가 없습니다." });
+  const db = loadDB();
+  const before = db.applicants.length;
+  db.applicants = db.applicants.filter(a => !ids.includes(a.id));
+  saveDB(db);
+  res.json({ success: true, deleted: before - db.applicants.length });
+});
+
+// ─── API: 채용공고 삭제 ───
+app.delete("/api/postings/:id", (req, res) => {
+  if (req.query.roleLevel === "일반사용자") return res.status(403).json({ error: "삭제 권한이 없습니다." });
+  const db = loadDB();
+  const idx = db.postings.findIndex(p => p.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: "공고를 찾을 수 없습니다." });
+  if (!isSuperAdmin(req.query) && db.postings[idx].department !== req.query.department) return res.status(403).json({ error: "접근 권한이 없습니다." });
+  db.postings.splice(idx, 1);
+  saveDB(db);
+  res.json({ success: true });
+});
+
+// ─── API: 파일 목록 (지원자별) ───
+app.get("/api/files/:applicantId", (req, res) => {
+  const db = loadDB();
+  const app = db.applicants.find(a => a.id === parseInt(req.params.applicantId));
+  if (!app) return res.status(404).json({ error: "지원자를 찾을 수 없습니다." });
+  if (!isSuperAdmin(req.query) && !canAccessDept(req.query, app.department)) {
+    return res.status(403).json({ error: "접근 권한이 없습니다." });
+  }
+  res.json(app.files || []);
+});
+
+// ─── API: 파일 추가 (지원자에 파일/URL 연결) ───
+app.post("/api/files/:applicantId", (req, res) => {
+  if (req.query.roleLevel === "일반사용자") return res.status(403).json({ error: "파일 첨부 권한이 없습니다." });
+  const db = loadDB();
+  const idx = db.applicants.findIndex(a => a.id === parseInt(req.params.applicantId));
+  if (idx === -1) return res.status(404).json({ error: "지원자를 찾을 수 없습니다." });
+  if (!canAccessDept(req.query, db.applicants[idx].department)) return res.status(403).json({ error: "접근 권한이 없습니다." });
+
+  const { name, url, type } = req.body; // type: "file" | "url"
+  if (!db.applicants[idx].files) db.applicants[idx].files = [];
+  const fileEntry = { id: Date.now(), name: name || "첨부파일", url, type: type || "file", addedAt: new Date().toISOString().split("T")[0] };
+  db.applicants[idx].files.push(fileEntry);
+  saveDB(db);
+  res.status(201).json(fileEntry);
+});
+
+// ─── API: 파일 삭제 ───
+app.delete("/api/files/:applicantId/:fileId", (req, res) => {
+  if (req.query.roleLevel === "일반사용자") return res.status(403).json({ error: "삭제 권한이 없습니다." });
+  const db = loadDB();
+  const idx = db.applicants.findIndex(a => a.id === parseInt(req.params.applicantId));
+  if (idx === -1) return res.status(404).json({ error: "지원자를 찾을 수 없습니다." });
+  if (!db.applicants[idx].files) return res.status(404).json({ error: "파일이 없습니다." });
+  db.applicants[idx].files = db.applicants[idx].files.filter(f => f.id !== parseInt(req.params.fileId));
+  saveDB(db);
+  res.json({ success: true });
 });
 
 app.post("/api/reset", (req, res) => {
