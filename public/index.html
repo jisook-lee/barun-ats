@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>바른컴퍼니 채용관리시스템 (Barun ATS)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232563EB'/><text x='16' y='22' font-size='18' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>B</text></svg>">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;background:#F8F9FB;color:#1E293B;overflow-x:hidden}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes slideIn{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.fade-up{animation:fadeUp .5s ease-out}.slide-in{animation:slideIn .3s ease-out}.shake{animation:shake .4s ease}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#2563EB!important;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+button{font-family:inherit}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0F172A 0%,#1E3A5F 50%,#0F172A 100%)}
+.login-card{width:420px;background:#FFF;border-radius:20px;padding:48px 40px;box-shadow:0 25px 60px rgba(0,0,0,.3);animation:fadeUp .6s ease-out}
+.login-logo{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#2563EB,#7C3AED);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px}
+.login-input{width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;background:#F8FAFC;transition:all .2s;font-family:inherit}
+.login-btn{width:100%;padding:13px;background:#2563EB;color:#FFF;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:20px}
+.login-btn:hover{background:#1D4ED8;transform:translateY(-1px)}
+.test-account{cursor:pointer;padding:5px 8px;border-radius:6px;background:#FFF;border:1px solid #E2E8F0;transition:all .15s}
+.test-account:hover{border-color:#2563EB;background:#EFF6FF}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:240px;background:#0F172A;color:#FFF;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sidebar-brand{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-nav{flex:1;padding:16px 12px}
+.nav-btn{width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;border:none;border-radius:10px;font-size:14px;cursor:pointer;margin-bottom:4px;transition:all .15s;text-align:left}
+.nav-btn.active{background:#334155;color:#FFF;font-weight:600}.nav-btn:not(.active){background:transparent;color:#94A3B8;font-weight:500}
+.nav-btn:not(.active):hover{background:#1E293B}
+.sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,.08)}
+.logout-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:transparent;color:#94A3B8;font-size:13px;cursor:pointer;transition:all .15s}
+.logout-btn:hover{background:#1E293B;color:#FFF}
+.main-content{flex:1;margin-left:240px;padding:28px 32px}
+.stat-card{padding:20px 22px;background:#FFF;border-radius:14px;border:1px solid #E2E8F0;transition:all .2s}
+.stat-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.card{background:#FFF;border-radius:14px;border:1px solid #E2E8F0}
+.kanban-col{min-width:230px;flex:1 0 230px;background:#F8FAFC;border-radius:12px;padding:12px;border:1px solid #E2E8F0}
+.kanban-card{background:#FFF;border-radius:10px;padding:12px 14px;border:1px solid #E2E8F0;cursor:grab;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.kanban-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}.kanban-card:active{cursor:grabbing}
+.stage-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.data-table{width:100%;border-collapse:collapse;font-size:14px}
+.data-table th{padding:12px 16px;text-align:left;font-weight:600;color:#64748B;font-size:13px;border-bottom:1px solid #E2E8F0;background:#F8FAFC}
+.data-table td{padding:12px 16px;border-bottom:1px solid #F1F5F9}
+.data-table tbody tr{cursor:pointer;transition:background .1s}.data-table tbody tr:hover{background:#F8FAFC}
+.modal-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center}
+.modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px)}
+.modal-content{position:relative;background:#FFF;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,.2);animation:slideIn .3s ease-out}
+.form-input{width:100%;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:14px;font-family:inherit;transition:all .2s}
+.form-select{width:100%;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:14px;font-family:inherit;background:#FFF;cursor:pointer}
+.form-label{display:block;font-size:13px;font-weight:600;color:#64748B;margin-bottom:5px}
+.btn-primary{display:flex;align-items:center;gap:6px;padding:10px 20px;border:none;border-radius:10px;background:#2563EB;color:#FFF;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-primary:hover{background:#1D4ED8}
+.btn-secondary{padding:10px 20px;border:1.5px solid #E2E8F0;border-radius:10px;background:#FFF;color:#64748B;font-size:14px;font-weight:600;cursor:pointer}
+.btn-stage{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.search-wrap{position:relative}.search-wrap input{padding:8px 12px 8px 34px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:13px;width:220px;font-family:inherit}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94A3B8;pointer-events:none}
+.star-btn{background:none;border:none;cursor:pointer;padding:2px;transition:transform .15s}.star-btn:hover{transform:scale(1.25)}
+.privacy-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#F59E0B;font-weight:600}
+.hover-lift{transition:all .2s}.hover-lift:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;color:#FFF;font-size:14px;font-weight:500;z-index:2000;animation:slideIn .3s ease-out}
+@media(max-width:900px){.sidebar{width:60px}.sidebar .brand-text,.sidebar .nav-label,.sidebar .user-info,.sidebar .logout-label{display:none}.main-content{margin-left:60px}.stat-grid{grid-template-columns:repeat(2,1fr)!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const {useState,useEffect,useCallback} = React;
+
+const STAGES=["서류접수","서류검토","1차 면접","2차 면접","최종합격","불합격"];
+const SC={"서류접수":{bg:"#E5E7EB",text:"#374151",dot:"#9CA3AF"},"서류검토":{bg:"#DBEAFE",text:"#1E40AF",dot:"#3B82F6"},"1차 면접":{bg:"#FEF3C7",text:"#92400E",dot:"#F59E0B"},"2차 면접":{bg:"#FFEDD5",text:"#9A3412",dot:"#F97316"},"최종합격":{bg:"#D1FAE5",text:"#065F46",dot:"#10B981"},"불합격":{bg:"#FEE2E2",text:"#991B1B",dot:"#EF4444"}};
+const DEPTS=["영업팀","CS팀","기타"];
+const CHS=["잡코리아","사람인","알바몬","원티드","기타"];
+const TUSERS=[{id:"admin",name:"김인사",role:"인사팀"},{id:"sales1",name:"박영업",role:"영업팀"},{id:"cs1",name:"이서비스",role:"CS팀"},{id:"etc1",name:"최기타",role:"기타"}];
+
+// ─── API helper ───
+const api = {
+  async post(url, body) { const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return r.json(); },
+  async get(url) { const r=await fetch(url); return r.json(); },
+  async put(url, body) { const r=await fetch(url,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return r.json(); },
+  async del(url) { const r=await fetch(url,{method:"DELETE"}); return r.json(); },
+};
+
+// ─── Icons ───
+const Ic={
+  Users:()=><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>,
+  Board:()=><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
+  Briefcase:()=><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>,
+  Shield:()=><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  Logout:()=><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>,
+  Plus:()=><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>,
+  X:()=><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+  Lock:()=><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>,
+  Search:()=><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>,
+  Chart:()=><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
+  Star:({f})=>f?<svg width="16" height="16" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  Trash:()=><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>,
+};
+const Stars=({score})=><span style={{display:"flex",gap:1}}>{[1,2,3,4,5].map(n=><Ic.Star key={n} f={n<=score}/>)}</span>;
+function StageBadge({stage}){const c=SC[stage];return <span className="stage-badge" style={{background:c.bg,color:c.text}}><span style={{width:7,height:7,borderRadius:"50%",background:c.dot}}/>{stage}</span>}
+
+// ─── Toast ───
+function Toast({msg,type,onClose}){
+  useEffect(()=>{const t=setTimeout(onClose,3000);return ()=>clearTimeout(t)},[]);
+  return <div className="toast" style={{background:type==="success"?"#059669":"#DC2626"}}>{msg}</div>;
+}
+
+// ─── Login ───
+function Login({onLogin}){
+  const [id,setId]=useState("");const [pw,setPw]=useState("");const [err,setErr]=useState("");const [shk,setShk]=useState(false);const [loading,setLoading]=useState(false);
+  const go=async()=>{
+    setLoading(true);
+    try{const r=await api.post("/api/login",{id,password:pw});if(r.success){onLogin(r.user)}else{setErr(r.error||"로그인 실패");setShk(true);setTimeout(()=>setShk(false),500)}}
+    catch(e){setErr("서버 연결에 실패했습니다.")}
+    setLoading(false);
+  };
+  return(
+    <div className="login-wrap">
+      <div className={`login-card ${shk?"shake":""}`}>
+        <div style={{textAlign:"center",marginBottom:36}}>
+          <div className="login-logo"><span style={{color:"#FFF",fontWeight:800,fontSize:22}}>B</span></div>
+          <h1 style={{fontSize:22,fontWeight:700,marginBottom:6}}>바른컴퍼니 채용관리</h1>
+          <p style={{fontSize:14,color:"#64748B"}}>Barun ATS에 로그인하세요</p>
+        </div>
+        <div style={{marginBottom:18}}><label className="form-label">아이디</label><input className="login-input" value={id} onChange={e=>{setId(e.target.value);setErr("")}} onKeyDown={e=>e.key==="Enter"&&go()} placeholder="아이디를 입력하세요"/></div>
+        <div style={{marginBottom:10}}><label className="form-label">비밀번호</label><input className="login-input" type="password" value={pw} onChange={e=>{setPw(e.target.value);setErr("")}} onKeyDown={e=>e.key==="Enter"&&go()} placeholder="비밀번호를 입력하세요"/></div>
+        {err&&<p style={{color:"#DC2626",fontSize:13,marginTop:8,fontWeight:500}}>{err}</p>}
+        <button className="login-btn" onClick={go} disabled={loading}>{loading?"로그인 중...":"로그인"}</button>
+        <div style={{marginTop:28,padding:"16px 18px",background:"#F8FAFC",borderRadius:10,border:"1px solid #E2E8F0"}}>
+          <p style={{fontSize:12,fontWeight:600,color:"#64748B",marginBottom:10}}>테스트 계정 안내</p>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,fontSize:12,color:"#475569"}}>
+            {TUSERS.map(u=><div key={u.id} className="test-account" onClick={()=>{setId(u.id);setPw("1234");setErr("")}}><b>{u.name}</b> <span style={{color:"#94A3B8"}}>({u.id})</span></div>)}
+          </div>
+          <p style={{fontSize:11,color:"#94A3B8",marginTop:8}}>비밀번호: 1234 (모든 계정 동일)</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Dashboard ───
+function Dashboard({user}){
+  const [data,setData]=useState(null);
+  const q=user.role==="인사팀"?`role=인사팀`:`role=부서담당자&department=${user.department}`;
+  useEffect(()=>{api.get(`/api/dashboard?${q}`).then(setData)},[]);
+  if(!data) return <div style={{padding:40,textAlign:"center",color:"#94A3B8"}}>로딩 중...</div>;
+  const mx=Math.max(...Object.values(data.stageCounts),1);
+  const stats=[{l:"전체 지원자",v:data.total,c:"#2563EB"},{l:"진행 중",v:data.active,c:"#F59E0B"},{l:"최종합격",v:data.hired,c:"#059669"},{l:"진행 중 공고",v:data.openPostings,c:"#7C3AED"}];
+  return(
+    <div className="fade-up">
+      <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:28}}>
+        {stats.map((s,i)=><div key={i} className="stat-card"><div style={{fontSize:13,color:"#64748B",fontWeight:500,marginBottom:6}}>{s.l}</div><div style={{fontSize:32,fontWeight:800,color:s.c}}>{s.v}</div></div>)}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:20}}>
+        <div className="card" style={{padding:24}}>
+          <h3 style={{fontSize:16,fontWeight:700,marginBottom:20}}>채용 단계별 현황</h3>
+          {STAGES.map(s=>{const c=SC[s];const n=data.stageCounts[s]||0;return(
+            <div key={s} style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+              <span style={{width:72,fontSize:13,fontWeight:600,color:c.text,textAlign:"right"}}>{s}</span>
+              <div style={{flex:1,height:28,background:"#F1F5F9",borderRadius:6,overflow:"hidden"}}><div style={{height:"100%",width:`${(n/mx)*100}%`,background:c.dot,borderRadius:6,transition:"width .6s",minWidth:n>0?4:0}}/></div>
+              <span style={{width:28,fontSize:14,fontWeight:700,textAlign:"right"}}>{n}</span>
+            </div>
+          )})}
+        </div>
+        <div className="card" style={{padding:24}}>
+          <h3 style={{fontSize:16,fontWeight:700,marginBottom:16}}>최근 지원자</h3>
+          {data.recentApplicants.map(a=>(
+            <div key={a.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #F1F5F9"}}>
+              <div><div style={{fontSize:14,fontWeight:600}}>{a.name}</div><div style={{fontSize:12,color:"#64748B"}}>{a.position}</div></div>
+              <StageBadge stage={a.stage}/>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Kanban ───
+function Kanban({user,search,onSelect}){
+  const [apps,setApps]=useState([]);
+  const q=user.role==="인사팀"?`role=인사팀`:`role=부서담당자&department=${user.department}`;
+  const load=()=>api.get(`/api/applicants?${q}`).then(setApps);
+  useEffect(()=>{load()},[]);
+  const filtered=search?apps.filter(a=>a.name.includes(search)||a.position.includes(search)):apps;
+  const active=STAGES.filter(s=>s!=="불합격"); const rejected=filtered.filter(a=>a.stage==="불합격");
+
+  const drop=async(stage,e)=>{
+    e.preventDefault();const id=parseInt(e.dataTransfer.getData("aid"));const a=apps.find(x=>x.id===id);
+    if(a&&a.stage!==stage){await api.put(`/api/applicants/${id}?${q}`,{stage});load();}
+  };
+
+  return(
+    <div className="fade-up">
+      <div style={{display:"flex",gap:14,overflowX:"auto",paddingBottom:16,minHeight:400}}>
+        {active.map(stage=>{const items=filtered.filter(a=>a.stage===stage);const c=SC[stage];return(
+          <div key={stage} className="kanban-col" onDragOver={e=>e.preventDefault()} onDrop={e=>drop(stage,e)}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,padding:"0 4px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{width:10,height:10,borderRadius:"50%",background:c.dot}}/><span style={{fontSize:14,fontWeight:700}}>{stage}</span></div>
+              <span style={{fontSize:12,fontWeight:700,color:"#94A3B8",background:"#E2E8F0",borderRadius:10,padding:"2px 8px"}}>{items.length}</span>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,minHeight:60}}>
+              {items.map(a=>(
+                <div key={a.id} className="kanban-card" draggable onDragStart={e=>e.dataTransfer.setData("aid",a.id)} onClick={()=>onSelect(a)}>
+                  <div style={{fontSize:14,fontWeight:600,marginBottom:4}}>{a.name}</div>
+                  <div style={{fontSize:12,color:"#64748B",marginBottom:8}}>{a.position}</div>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <span style={{fontSize:11,color:"#94A3B8"}}>{a.appliedAt}</span>
+                    {a.score>0&&<Stars score={a.score}/>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )})}
+      </div>
+      {rejected.length>0&&(
+        <div style={{marginTop:16,padding:16,background:"#FEF2F2",borderRadius:12,border:"1px solid #FECACA"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><span style={{width:10,height:10,borderRadius:"50%",background:"#EF4444"}}/><span style={{fontSize:14,fontWeight:700,color:"#991B1B"}}>불합격</span><span style={{fontSize:12,fontWeight:700,color:"#FCA5A5",background:"#FEE2E2",borderRadius:10,padding:"2px 8px"}}>{rejected.length}</span></div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{rejected.map(a=><div key={a.id} onClick={()=>onSelect(a)} style={{background:"#FFF",borderRadius:8,padding:"8px 14px",border:"1px solid #FECACA",cursor:"pointer",fontSize:13}}><b style={{color:"#991B1B"}}>{a.name}</b> <span style={{color:"#FCA5A5"}}>{a.position}</span></div>)}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Table ───
+function AppTable({user,search,onSelect}){
+  const [apps,setApps]=useState([]);
+  useEffect(()=>{api.get(`/api/applicants?role=인사팀`).then(setApps)},[]);
+  const filtered=apps.filter(a=>!search||a.name.includes(search)||a.position.includes(search)||a.department.includes(search));
+  return(
+    <div className="card fade-up" style={{overflow:"hidden"}}>
+      <table className="data-table"><thead><tr>{["지원자","부서","직무","채용단계","지원경로","연락처","지원일","평가"].map((h,i)=><th key={i}>{h}</th>)}</tr></thead>
+        <tbody>{filtered.map(a=>(
+          <tr key={a.id} onClick={()=>onSelect(a)}>
+            <td style={{fontWeight:600}}>{a.name}</td><td style={{color:"#64748B"}}>{a.department}</td><td style={{color:"#64748B"}}>{a.position}</td>
+            <td><StageBadge stage={a.stage}/></td><td style={{color:"#64748B"}}>{a.channel}</td><td style={{color:"#64748B"}}>{a.phone}</td><td style={{color:"#64748B"}}>{a.appliedAt}</td>
+            <td>{a.score>0?<Stars score={a.score}/>:<span style={{color:"#CBD5E1",fontSize:13}}>미평가</span>}</td>
+          </tr>
+        ))}</tbody>
+      </table>
+      {filtered.length===0&&<div style={{padding:48,textAlign:"center",color:"#94A3B8"}}>검색 결과가 없습니다.</div>}
+    </div>
+  );
+}
+
+// ─── Postings ───
+function Postings({user}){
+  const [posts,setPosts]=useState([]);
+  const q=user.role==="인사팀"?`role=인사팀`:`role=부서담당자&department=${user.department}`;
+  useEffect(()=>{api.get(`/api/postings?${q}`).then(setPosts)},[]);
+  const isA=user.role==="인사팀";
+  const statusC={"준비중":"#94A3B8","모집중":"#2563EB","마감":"#F59E0B","채용완료":"#059669"};
+  const updateStatus=async(p,status)=>{await api.put(`/api/postings/${p.id}?role=인사팀`,{status});api.get(`/api/postings?${q}`).then(setPosts);};
+  return(
+    <div className="fade-up" style={{display:"flex",flexDirection:"column",gap:12}}>
+      {posts.map(p=>(
+        <div key={p.id} className="card hover-lift" style={{padding:"20px 24px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><h3 style={{fontSize:16,fontWeight:700,margin:0}}>{p.title}</h3><span style={{fontSize:12,fontWeight:700,padding:"3px 10px",borderRadius:20,background:`${statusC[p.status]}18`,color:statusC[p.status]}}>{p.status}</span></div>
+              <div style={{display:"flex",gap:16,fontSize:13,color:"#64748B"}}><span>{p.department}</span><span>·</span><span>모집 {p.headcount}명</span><span>·</span><span>{p.startDate} ~ {p.endDate}</span></div>
+            </div>
+            {isA&&<select className="form-select" style={{width:"auto"}} value={p.status} onChange={e=>updateStatus(p,e.target.value)}>{["준비중","모집중","마감","채용완료"].map(s=><option key={s}>{s}</option>)}</select>}
+          </div>
+          <div style={{display:"flex",gap:6,marginTop:12}}>{p.channels.map(c=><span key={c} style={{fontSize:12,padding:"3px 10px",borderRadius:6,background:"#F1F5F9",color:"#475569",fontWeight:500}}>{c}</span>)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Detail Modal ───
+function DetailModal({appData,user,onClose,onSaved}){
+  const [sc,setSc]=useState(appData.score||0);const [cm,setCm]=useState(appData.comment||"");const [st,setSt]=useState(appData.stage);const [saving,setSaving]=useState(false);
+  const isA=user.role==="인사팀";const q=isA?`role=인사팀`:`role=부서담당자&department=${user.department}`;
+  const locked=<span style={{display:"inline-flex",alignItems:"center",gap:4,color:"#94A3B8",fontSize:13}}><Ic.Lock/> 비공개 (인사팀 전용)</span>;
+  const save=async()=>{setSaving(true);await api.put(`/api/applicants/${appData.id}?${q}`,{stage:st,score:sc,comment:cm});setSaving(false);onSaved();onClose();};
+  const Info=({l,v})=><div><span style={{display:"block",fontSize:12,color:"#94A3B8",fontWeight:500,marginBottom:3}}>{l}</span><span style={{fontSize:14,fontWeight:500}}>{v}</span></div>;
+  return(
+    <div className="modal-overlay" onClick={onClose}><div className="modal-backdrop"/>
+      <div className="modal-content slide-in" style={{width:560,maxHeight:"85vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
+        <div style={{padding:"24px 28px 0"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><h2 style={{fontSize:20,fontWeight:700,margin:0}}>{appData.name}</h2><p style={{fontSize:14,color:"#64748B",marginTop:4}}>{appData.department} · {appData.position}</p></div><button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:"#94A3B8"}}><Ic.X/></button></div></div>
+        <div style={{padding:"20px 28px"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+            <Info l="지원일" v={appData.appliedAt}/><Info l="지원 경로" v={isA?(appData.channel||"-"):locked}/>
+            <Info l="연락처" v={isA?(appData.phone||"-"):locked}/><Info l="이메일" v={isA?(appData.email||"-"):locked}/>
+          </div>
+          <div style={{padding:"14px 16px",background:"#F8FAFC",borderRadius:10,marginBottom:20,display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:13,color:"#64748B",fontWeight:500}}>이력서:</span>
+            {isA?<span style={{fontSize:13,color:"#2563EB",fontWeight:600,cursor:"pointer"}}>{appData.resume||"미첨부"}</span>:<span style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:13,color:"#94A3B8"}}><Ic.Lock/> 인사팀만 열람 가능</span>}
+          </div>
+          <div style={{marginBottom:18}}><label className="form-label" style={{marginBottom:8}}>채용 단계</label>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{(isA?STAGES:STAGES.filter(s=>s!=="서류접수")).map(s=>{const c=SC[s];return <button key={s} className="btn-stage" onClick={()=>setSt(s)} style={{border:st===s?`2px solid ${c.dot}`:"2px solid #E2E8F0",background:st===s?c.bg:"#FFF",color:st===s?c.text:"#64748B"}}>{s}</button>})}</div>
+          </div>
+          <div style={{marginBottom:18}}><label className="form-label" style={{marginBottom:8}}>평가 점수</label>
+            <div style={{display:"flex",alignItems:"center",gap:4}}>{[1,2,3,4,5].map(n=><button key={n} className="star-btn" onClick={()=>setSc(n)}><Ic.Star f={n<=sc}/></button>)}<span style={{fontSize:13,color:"#64748B",marginLeft:8}}>{sc>0?`${sc}점`:"미평가"}</span></div>
+          </div>
+          <div style={{marginBottom:20}}><label className="form-label" style={{marginBottom:8}}>평가 코멘트</label><textarea className="form-input" value={cm} onChange={e=>setCm(e.target.value)} rows={3} placeholder="지원자에 대한 평가를 입력하세요..." style={{resize:"vertical"}}/></div>
+        </div>
+        <div style={{padding:"16px 28px 24px",display:"flex",justifyContent:"flex-end",gap:10}}>
+          <button className="btn-secondary" onClick={onClose}>취소</button>
+          <button className="btn-primary" onClick={save} disabled={saving}>{saving?"저장 중...":"저장"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Add Modal ───
+function AddModal({onClose,onAdded}){
+  const [f,sF]=useState({name:"",department:"영업팀",position:"",channel:"잡코리아",phone:"",email:""});const [saving,setSaving]=useState(false);
+  const u=(k,v)=>sF(p=>({...p,[k]:v}));
+  const save=async()=>{if(!f.name||!f.position)return;setSaving(true);await api.post("/api/applicants?role=인사팀",f);setSaving(false);onAdded();onClose();};
+  return(
+    <div className="modal-overlay" onClick={onClose}><div className="modal-backdrop"/>
+      <div className="modal-content slide-in" style={{width:480,padding:28}} onClick={e=>e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}><h2 style={{fontSize:18,fontWeight:700}}>신규 지원자 등록</h2><button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:"#94A3B8"}}><Ic.X/></button></div>
+        <div style={{display:"grid",gap:14}}>
+          <div><label className="form-label">지원자명 *</label><input className="form-input" value={f.name} onChange={e=>u("name",e.target.value)} placeholder="성명"/></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><label className="form-label">지원 부서</label><select className="form-select" value={f.department} onChange={e=>u("department",e.target.value)}>{DEPTS.map(d=><option key={d}>{d}</option>)}</select></div>
+            <div><label className="form-label">지원 직무 *</label><input className="form-input" value={f.position} onChange={e=>u("position",e.target.value)} placeholder="직무명"/></div>
+          </div>
+          <div><label className="form-label">지원 경로</label><select className="form-select" value={f.channel} onChange={e=>u("channel",e.target.value)}>{CHS.map(c=><option key={c}>{c}</option>)}</select></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><label className="form-label">연락처</label><input className="form-input" value={f.phone} onChange={e=>u("phone",e.target.value)} placeholder="010-0000-0000"/></div>
+            <div><label className="form-label">이메일</label><input className="form-input" value={f.email} onChange={e=>u("email",e.target.value)} placeholder="email@example.com"/></div>
+          </div>
+        </div>
+        <div style={{display:"flex",justifyContent:"flex-end",gap:10,marginTop:24}}>
+          <button className="btn-secondary" onClick={onClose}>취소</button>
+          <button className="btn-primary" onClick={save} style={{opacity:f.name&&f.position?1:.5}} disabled={saving}>{saving?"등록 중...":"등록"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── App ───
+function App(){
+  const [user,setUser]=useState(null);const [page,setPage]=useState("dashboard");const [sel,setSel]=useState(null);const [addM,setAddM]=useState(false);const [search,setSearch]=useState("");const [toast,setToast]=useState(null);const [refreshKey,setRefreshKey]=useState(0);
+  const refresh=()=>setRefreshKey(k=>k+1);
+  const showToast=(msg,type="success")=>setToast({msg,type});
+  if(!user) return <Login onLogin={u=>{setUser(u);showToast(`${u.name}님 환영합니다!`)}}/>;
+  const isA=user.role==="인사팀";
+  const nav=[{id:"dashboard",l:"대시보드",ic:<Ic.Chart/>},{id:"board",l:"채용 보드",ic:<Ic.Board/>},...(isA?[{id:"applicants",l:"전체 지원자",ic:<Ic.Users/>}]:[]),{id:"postings",l:"채용 공고",ic:<Ic.Briefcase/>}];
+  const titles={dashboard:"대시보드",board:isA?"전체 채용 보드":`${user.department} 채용 보드`,applicants:"전체 지원자 관리",postings:"채용 공고 관리"};
+
+  return(
+    <div className="app-layout">
+      <aside className="sidebar">
+        <div className="sidebar-brand"><div style={{display:"flex",alignItems:"center",gap:12}}><div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#2563EB,#7C3AED)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,color:"#FFF",flexShrink:0}}>B</div><div className="brand-text"><div style={{fontSize:15,fontWeight:700}}>바른 ATS</div><div style={{fontSize:11,color:"#94A3B8"}}>채용 관리 시스템</div></div></div></div>
+        <nav className="sidebar-nav">{nav.map(n=><button key={n.id} className={`nav-btn ${page===n.id?"active":""}`} onClick={()=>{setPage(n.id);setSearch("")}}>{n.ic}<span className="nav-label">{n.l}</span></button>)}</nav>
+        <div className="sidebar-footer">
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,padding:"0 6px"}}><div style={{width:32,height:32,borderRadius:8,background:"#334155",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#FFF",flexShrink:0}}>{user.name[0]}</div><div className="user-info"><div style={{fontSize:13,fontWeight:600}}>{user.name}</div><div style={{fontSize:11,color:"#64748B"}}>{isA?"인사팀 관리자":`${user.department} 담당자`}</div></div></div>
+          <button className="logout-btn" onClick={()=>{setUser(null);setPage("dashboard")}}><Ic.Logout/><span className="logout-label">로그아웃</span></button>
+        </div>
+      </aside>
+      <main className="main-content">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:28,flexWrap:"wrap",gap:12}}>
+          <div>
+            <h1 style={{fontSize:22,fontWeight:800}}>{titles[page]}</h1>
+            <p style={{fontSize:14,color:"#64748B",marginTop:4}}>
+              {isA?"전체 부서의 채용 현황을 관리합니다.":`${user.department} 소속 지원자만 열람 가능합니다.`}
+              {!isA&&<span className="privacy-badge" style={{marginLeft:8}}><Ic.Shield/> 개인정보 보호 모드</span>}
+            </p>
+          </div>
+          <div style={{display:"flex",gap:10,alignItems:"center"}}>
+            {(page==="board"||page==="applicants")&&<div className="search-wrap"><Ic.Search/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="이름, 직무 검색..."/></div>}
+            {isA&&(page==="board"||page==="applicants")&&<button className="btn-primary" onClick={()=>setAddM(true)}><Ic.Plus/> 지원자 등록</button>}
+          </div>
+        </div>
+        {page==="dashboard"&&<Dashboard key={refreshKey} user={user}/>}
+        {page==="board"&&<Kanban key={refreshKey} user={user} search={search} onSelect={setSel}/>}
+        {page==="applicants"&&isA&&<AppTable key={refreshKey} user={user} search={search} onSelect={setSel}/>}
+        {page==="postings"&&<Postings key={refreshKey} user={user}/>}
+      </main>
+      {sel&&<DetailModal appData={sel} user={user} onClose={()=>setSel(null)} onSaved={()=>{refresh();showToast("저장되었습니다.")}}/>}
+      {addM&&<AddModal onClose={()=>setAddM(false)} onAdded={()=>{refresh();showToast("지원자가 등록되었습니다.")}}/>}
+      {toast&&<Toast msg={toast.msg} type={toast.type} onClose={()=>setToast(null)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("app")).render(<App/>);
+</script>
+</body>
+</html>
